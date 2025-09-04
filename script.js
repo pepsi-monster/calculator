@@ -209,7 +209,7 @@ const isOneToNine = (x) => (oneToNineArr.includes(x) ? true : false);
 const isZeroAppendable = (msg) =>
   /(?:^|[÷×−+])(?:−?$|−?[1-9]\d*|−?\d+\.\d*)$/.test(msg);
 const isDotAppendable = (msg) => /(?:^|[÷×+−])-?\d+$/.test(msg);
-const isCalculable = (msg) => /\d+[÷×−+]\d+/.test(msg);
+const isCalculable = (msg) => /\d+[÷×−+]−?\d+/.test(msg);
 
 let message = "";
 
