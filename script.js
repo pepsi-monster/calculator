@@ -216,6 +216,10 @@ const handleAfterCalculate = (input) => {
     message = appendChar(message, input);
   } else if (isOneToNine(input) || isZero(input)) {
     message = clearAll();
+  } else if (isDot(input)) {
+    if (isDotAppendable(message)) {
+      message = appendChar(message, input);
+    }
   }
   state = states.beforeCalculated;
   return;
