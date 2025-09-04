@@ -4,6 +4,14 @@
   --press-dur-bg: 160ms; /* color/gradient a tad slower */
 }
 
+.calculator:focus {
+  outline: none;
+}
+
+button:focus {
+  outline: none;
+}
+
 body {
   height: 100vh;
   display: flex;

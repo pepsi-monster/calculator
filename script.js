@@ -1,6 +1,8 @@
 import Color from "./color.js";
 
 const calculator = document.querySelector(".calculator");
+window.addEventListener("load", () => calculator.focus());
+calculator.addEventListener("pointerdown", () => calculator.focus());
 
 const theme = {
   redM: {
@@ -125,11 +127,15 @@ rows[0].appendChild(screen);
 document.querySelectorAll(".cal-btn").forEach((btn) => {
   const label = btn.querySelector("h1");
   btn.setAttribute("value", label.textContent);
+  btn.setAttribute("tabindex", "-1");
 });
 
 const parseExpressions = (expr) => {
   expr = expr.replace(/−/g, "-");
   const tokens = expr.match(/-?\d+(?:\.\d+)?|[÷×+-]/g);
+
+  if (/[÷×+-]/.test(tokens.slice(-1))) tokens.pop();
+
   return tokens;
 };
 
@@ -334,23 +340,105 @@ const updateScreen = (input) => {
   screenMsg.textContent = message;
 };
 
-const wirePress = (btn) => {
-  const press = () => btn.classList.add("is-pressed");
-  const release = () => btn.classList.remove("is-pressed");
+const press = (elem) => elem.classList.add("is-pressed");
+const release = (elem) => elem.classList.remove("is-pressed");
 
+const wirePress = (btn) => {
   btn.addEventListener("pointerdown", (e) => {
     btn.setPointerCapture(e.pointerId);
-    press();
+    press(btn);
     updateScreen(btn.value);
   });
 
   btn.addEventListener("pointerup", (e) => {
-    release();
+    release(btn);
   });
 
   btn.addEventListener("pointercancel", (e) => {
-    release();
+    release(btn);
   });
 };
 
 document.querySelectorAll(".cal-btn").forEach(wirePress);
+
+const keyMap = new Map([
+  ["Digit0", "0"],
+  ["Digit1", "1"],
+  ["Digit2", "2"],
+  ["Digit3", "3"],
+  ["Digit4", "4"],
+  ["Digit5", "5"],
+  ["Digit6", "6"],
+  ["Digit7", "7"],
+  ["Digit8", "8"], // must check if it's multiply
+  ["Digit9", "9"],
+
+  ["Numpad0", "0"],
+  ["Numpad1", "1"],
+  ["Numpad2", "2"],
+  ["Numpad3", "3"],
+  ["Numpad4", "4"],
+  ["Numpad5", "5"],
+  ["Numpad6", "6"],
+  ["Numpad7", "7"],
+  ["Numpad8", "8"],
+  ["Numpad9", "9"],
+
+  ["NumpadAdd", "+"],
+  ["NumpadSubtract", "−"],
+  ["NumpadMultiply", "×"],
+  ["NumpadDivide", "÷"],
+  ["NumpadDecimal", "."],
+
+  ["Period", "."],
+  ["Minus", "−"],
+  ["Slash", "÷"],
+
+  ["Equal", "="], // must check if it's actually +
+  ["Enter", "="],
+  ["NumpadEnter", "="],
+  ["Backspace", "DEL"],
+  ["Escape", "AC"],
+]);
+
+const normalizeKeyCode = (event) => {
+  const keyCode = event.code;
+  const keyLiteral = event.key;
+
+  let result;
+
+  if (keyCode === "Digit8" && keyLiteral === "*") {
+    result = "NumpadMultiply";
+  } else if (keyCode === "Equal" && keyLiteral === "+") {
+    result = "NumpadAdd";
+  } else result = keyCode;
+
+  return result;
+};
+
+calculator.addEventListener("keydown", (e) => {
+  const validCodes = [...keyMap.keys()];
+  const keyCode = e.code;
+
+  if (validCodes.includes(keyCode)) {
+    const normalizedKeyCode = normalizeKeyCode(e);
+    const calLiteral = keyMap.get(normalizedKeyCode);
+    const btn = document.querySelector(`[value="${calLiteral}"]`);
+
+    press(btn);
+    updateScreen(btn.value);
+  }
+});
+
+calculator.addEventListener("keyup", (e) => {
+  const validCodes = [...keyMap.keys()];
+  const keyCode = e.code;
+
+  if (validCodes.includes(keyCode)) {
+    const normalizedKeyCode = normalizeKeyCode(e);
+    const calLiteral = keyMap.get(normalizedKeyCode);
+    const btn = document.querySelector(`[value="${calLiteral}"]`);
+
+    release(btn);
+  }
+});
