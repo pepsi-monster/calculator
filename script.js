@@ -66,6 +66,7 @@ const createBtn = (label, config = {}) => {
   const btn = document.createElement("button");
   btn.classList.add("cal-btn");
   btn.setAttribute("type", "button");
+  btn.style.setProperty("cursor", "pointer");
 
   const btnContainer = document.createElement("div");
   btnContainer.classList.add("cal-btn-container");

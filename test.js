@@ -49,7 +49,7 @@ const calculate = (expr) => {
   return result;
 };
 
-const isCalculable = (msg) => /\d+[÷×−+]\d+/.test(msg);
+const isCalculable = (msg) => /\d+[÷×−+]−?\d+/.test(msg);
 
 const expr = "889÷−9";
 
