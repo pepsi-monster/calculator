@@ -172,6 +172,65 @@ const states = {
 
 let state = states.beforeCalculated;
 
+function expHandler(n, charRoom) {
+  const defaultExp = n.toExponential();
+  const isOverFlow = defaultExp.length > charRoom;
+
+  const negRoom = n >= 0 ? 0 : 1;
+  const expRoom = defaultExp.match(/(?<=e[+-])\d+$/)[0].length;
+  const notationRoom = "d.±e".length;
+  const decimalRoom = charRoom - (negRoom + expRoom + notationRoom);
+
+  return isOverFlow ? n.toExponential(decimalRoom) : n.toExponential();
+}
+
+function overFlowHandler(n, maxCharRoom = 12) {
+  const negRoom = n >= 0 ? 0 : 1;
+  const dotRoom = 1;
+
+  const stringfied = Math.abs(n).toString(10);
+
+  const [_, int, decimal] = stringfied.match(/^(\d+)(?:\.(\d+))?$/);
+  const isIntOverFlow = int.length + negRoom > maxCharRoom;
+  if (isIntOverFlow) return expHandler(n, maxCharRoom);
+  else {
+    const decimalRoom = maxCharRoom - (int.length + dotRoom + negRoom);
+    const neg = negRoom === 0 ? "" : "-";
+    const decimalAdjusted = roundTo(parseFloat("0." + decimal), decimalRoom)
+      .toString()
+      .slice(1);
+    return neg + int + decimalAdjusted;
+  }
+}
+
+function roundTo(num, decimals) {
+  const factor = 10 ** decimals;
+  return Math.round(num * factor) / factor;
+}
+
+const formatCalcResult = (n, maxCharRoom = 13) => {
+  const finite = Number.isFinite(n);
+
+  let result;
+  if (!finite) {
+    result = n;
+  }
+  if (finite) {
+    const stringfied = n.toString(10);
+    const isExpAlready = /e/i.test(n);
+    const isAsIs = !isExpAlready && stringfied.length <= maxCharRoom;
+    const isOverFlow = !isExpAlready && stringfied.length > maxCharRoom;
+
+    if (isExpAlready) result = expHandler(n, maxCharRoom);
+    if (isAsIs) result = n.toString();
+    if (isOverFlow) result = overFlowHandler(n, maxCharRoom);
+  }
+  return result;
+};
+
+const MAXCHAR = 13;
+const MAXRESULTROOM = MAXCHAR - 2;
+
 const calculate = (expr) => {
   const tokens = parseExpressions(expr);
   const afterMul = reduceByOperator(tokens, "×", (a, b) => a * b);
@@ -181,7 +240,7 @@ const calculate = (expr) => {
   if (afterDiv.ok) {
     const noPlus = afterDiv.value.filter((el) => el !== "+");
     const num = noPlus.reduce((a, b) => Number(a) + Number(b));
-    result = String(ceilTo(String(num).slice(0, 11), 10));
+    result = formatCalcResult(num, MAXRESULTROOM);
   } else {
     result = afterDiv.error;
     state = states.error;
@@ -215,11 +274,13 @@ const isCalculable = (msg) => /\d+[÷×−+]−?\d+/.test(msg);
 let message = "";
 
 const handleAfterCalculate = (input) => {
+  const hasRoom = message.length < MAXCHAR;
+
   if (isDel(input)) {
     message = deleteLastChar(message);
   } else if (isAc(input)) {
     message = clearAll();
-  } else if (isOperators(input) || isMinus(input)) {
+  } else if ((isOperators(input) && hasRoom) || (isMinus(input) && hasRoom)) {
     message = appendChar(message, input);
   } else if (isOneToNine(input) || isZero(input)) {
     message = clearAll();
@@ -236,9 +297,7 @@ const handleBeforeCalculate = (input) => {
   const secondToLastChar = message.slice(-2, -1);
   const lastChar = message.slice(-1);
 
-  const maxChar = 13;
-
-  const hasRoom = message.length < maxChar;
+  const hasRoom = message.length < MAXCHAR;
 
   if (isDel(input)) {
     message = deleteLastChar(message);
