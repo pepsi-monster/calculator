@@ -26,7 +26,7 @@ body {
   flex-direction: column;
   gap: 4px;
   width: 372px;
-  height: 544px;
+  height: 576px;
   background-color: #213a64;
   border-radius: 32px;
   justify-content: center;
@@ -41,22 +41,45 @@ body {
 }
 
 .screen {
+  box-sizing: border-box;
   background-color: #0c1e33;
   width: 324px;
-  height: 78px;
+  height: 102px;
   border-radius: 20px;
   box-shadow: inset 4px 4px #041122, inset -1px -1px #183258;
-  margin-bottom: 12px;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: right;
+  margin-bottom: 16px;
+  padding: 16px 16px 16px 0px;
 }
 
-.screen h1 {
+.screen .msg {
   margin-left: auto;
-  margin-right: 16px;
   text-shadow: 4px 4px 0 #041122;
+  font-size: 38px;
+  text-align: center;
+  font-family: "Nunito", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 1000;
+  font-style: normal;
+  color: white;
+  line-height: 95%;
+  margin-top: auto;
+}
+.screen .expr {
+  margin-left: auto;
+  text-shadow: 2px 2px 0 #041122;
+  font-size: 24px;
+  text-align: center;
+  font-family: "Nunito", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+  color: hsl(220, 10%, 70%);
+  line-height: 120%;
 }
 
 .cal-btn {

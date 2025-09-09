@@ -120,7 +120,11 @@ rows.forEach((row) => {
 
 const screen = document.createElement("div");
 screen.classList.add("screen");
-const screenMsg = document.createElement("h1");
+const exprMsg = document.createElement("span");
+exprMsg.classList.add("expr");
+const screenMsg = document.createElement("span");
+screenMsg.classList.add("msg");
+screen.appendChild(exprMsg);
 screen.appendChild(screenMsg);
 
 rows[0].appendChild(screen);
@@ -280,10 +284,12 @@ const handleAfterCalculate = (input) => {
     message = deleteLastChar(message);
   } else if (isAc(input)) {
     message = clearAll();
+    exprMsg.textContent = message;
   } else if ((isOperators(input) && hasRoom) || (isMinus(input) && hasRoom)) {
     message = appendChar(message, input);
   } else if (isOneToNine(input) || isZero(input)) {
     message = clearAll();
+    exprMsg.textContent = message;
   } else if (isDot(input)) {
     if (isDotAppendable(message)) {
       message = appendChar(message, input);
@@ -306,6 +312,7 @@ const handleBeforeCalculate = (input) => {
 
   if (isAc(input)) {
     message = clearAll();
+    exprMsg.textContent = message;
     return;
   }
 
@@ -366,6 +373,7 @@ const handleBeforeCalculate = (input) => {
   }
 
   if (isEquality(input) && isCalculable(message)) {
+    exprMsg.textContent = message;
     message = calculate(message);
     state = states.afterCalculated;
     return;
@@ -375,6 +383,7 @@ const handleBeforeCalculate = (input) => {
 const handleError = (input) => {
   if (input) {
     message = clearAll();
+    exprMsg.textContent = message;
   }
 
   state = states.beforeCalculated;
@@ -389,6 +398,7 @@ const updateScreen = (input) => {
       break;
     }
     case states.afterCalculated: {
+      exprMsg.textContent = message;
       handleAfterCalculate(input);
       break;
     }
