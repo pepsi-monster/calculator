@@ -69,6 +69,7 @@ body {
   line-height: 95%;
   margin-top: auto;
 }
+
 .screen .expr {
   margin-left: auto;
   text-shadow: 2px 2px 0 #041122;
@@ -78,7 +79,7 @@ body {
   font-optical-sizing: auto;
   font-weight: 700;
   font-style: normal;
-  color: hsl(220, 10%, 70%);
+  color: hsl(220, 20%, 60%);
   line-height: 120%;
 }
 
