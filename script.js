@@ -118,6 +118,14 @@ rows.forEach((row) => {
   calculator.appendChild(row);
 });
 
+const states = {
+  error: "error",
+  beforeCalculated: "beforeCalculated",
+  afterCalculated: "afterCalculated",
+};
+
+let state = states.beforeCalculated;
+
 const screen = document.createElement("div");
 screen.classList.add("screen");
 const exprMsg = document.createElement("span");
@@ -136,45 +144,19 @@ document.querySelectorAll(".cal-btn").forEach((btn) => {
 });
 
 const parseExpressions = (expr) => {
-  expr = expr.replace(/−/g, "-");
-  const tokens = expr.match(/-?\d+(?:\.\d+)?|[÷×+-]/g);
+  expr = expr
+    .replace(/−/g, "-")
+    .replace(/,/g, "")
+    .replace(/÷/g, "/")
+    .replace(/×/g, "*");
 
-  if (/[÷×+-]$/.test(tokens.slice(-1))) tokens.pop();
+  const tokens =
+    expr.match(/-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|[/*+\-]/g) || [];
+
+  if (/^[/*+\-]$/.test(tokens.at(-1))) tokens.pop();
 
   return tokens;
 };
-
-const reduceByOperator = (tokenArr, operator, fn) => {
-  let result = tokenArr.slice();
-  while (true) {
-    const idx = result.indexOf(operator);
-    if (idx === -1) break;
-
-    const left = Number(result[idx - 1]);
-    const right = Number(result[idx + 1]);
-
-    if (operator === "÷" && right === 0) {
-      return { ok: false, error: "Zero?! (×_×)" };
-    }
-
-    const value = fn(left, right);
-    result.splice(idx - 1, 3, value);
-  }
-  return { ok: true, value: result };
-};
-
-const ceilTo = (num, decimals) => {
-  const factor = 10 ** decimals;
-  return Math.ceil(num * factor) / factor;
-};
-
-const states = {
-  error: "error",
-  beforeCalculated: "beforeCalculated",
-  afterCalculated: "afterCalculated",
-};
-
-let state = states.beforeCalculated;
 
 function expHandler(n, charRoom) {
   const defaultExp = n.toExponential();
@@ -188,7 +170,7 @@ function expHandler(n, charRoom) {
   return isOverFlow ? n.toExponential(decimalRoom) : n.toExponential();
 }
 
-function overFlowHandler(n, maxCharRoom = 12) {
+function overFlowHandler(n, maxCharRoom = 13) {
   const negRoom = n >= 0 ? 0 : 1;
   const dotRoom = 1;
 
@@ -232,26 +214,38 @@ const formatCalcResult = (n, maxCharRoom = 13) => {
   return result;
 };
 
-const MAXCHAR = 13;
-const MAXRESULTROOM = MAXCHAR - 2;
+const MAXCHAR = 12;
 
-const calculate = (expr) => {
+function calculate(expr) {
   const tokens = parseExpressions(expr);
-  const afterMul = reduceByOperator(tokens, "×", (a, b) => a * b);
-  const afterDiv = reduceByOperator(afterMul.value, "÷", (a, b) => a / b);
+  console.log(tokens);
+  let arr = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let t = tokens[i];
+    if (t === "/" || t === "*") {
+      const left = Number(arr.pop());
+      const right = Number(tokens[i + 1]);
+      arr.push(t === "/" ? left / right : left * right);
+      i += 2;
+    } else {
+      arr.push(t);
+      i++;
+    }
+  }
 
-  let result;
-  if (afterDiv.ok) {
-    const noPlus = afterDiv.value.filter((el) => el !== "+");
-    const num = noPlus.reduce((a, b) => Number(a) + Number(b));
-    result = formatCalcResult(num, MAXRESULTROOM);
-  } else {
-    result = afterDiv.error;
+  const noPlus = arr.filter((el) => el !== "+");
+  let result = noPlus.reduce((a, b) => Number(a) + Number(b));
+
+  if (!Number.isFinite(result)) {
+    result = "Error! (×_×)";
     state = states.error;
+  } else {
+    result = formatCalcResult(result);
   }
 
   return result;
-};
+}
 
 const clearAll = () => "";
 const deleteLastChar = (str) => str.slice(0, -1);
@@ -282,14 +276,15 @@ const handleAfterCalculate = (input) => {
 
   if (isDel(input)) {
     message = deleteLastChar(message);
+    exprMsg.textContent = clearAll();
   } else if (isAc(input)) {
     message = clearAll();
-    exprMsg.textContent = message;
+    exprMsg.textContent = clearAll();
   } else if ((isOperators(input) && hasRoom) || (isMinus(input) && hasRoom)) {
     message = appendChar(message, input);
   } else if (isOneToNine(input) || isZero(input)) {
     message = clearAll();
-    exprMsg.textContent = message;
+    exprMsg.textContent = clearAll();
   } else if (isDot(input)) {
     if (isDotAppendable(message)) {
       message = appendChar(message, input);
@@ -299,11 +294,35 @@ const handleAfterCalculate = (input) => {
   return;
 };
 
+const commaAdder = (n) => n.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const prettyFormatExpr = (expr) => {
+  if (expr && !/e/.test(expr)) {
+    const arr = expr.match(
+      /(?:[×÷][-−]|^[-−]|\d+(?=\.\d+)|\d+|\.\d*|[×÷+−-])/g
+    );
+    const result = arr.map((n) => (/^\d+$/.test(n) ? commaAdder(n) : n));
+    const danglers = [".", "+", "−", "÷", "×"];
+    if (
+      state === states.afterCalculated &&
+      danglers.includes(result[result.length - 1])
+    ) {
+      result.pop();
+      return result.join("");
+    } else return result.join("");
+  } else return expr;
+};
+
+const countChar = (str, ch) => {
+  return str.split(ch).length - 1;
+};
+
 const handleBeforeCalculate = (input) => {
   const secondToLastChar = message.slice(-2, -1);
   const lastChar = message.slice(-1);
 
-  const hasRoom = message.length < MAXCHAR;
+  const dotCount = countChar(message, ".");
+
+  const hasRoom = message.length < MAXCHAR + dotCount;
 
   if (isDel(input)) {
     message = deleteLastChar(message);
@@ -373,9 +392,10 @@ const handleBeforeCalculate = (input) => {
   }
 
   if (isEquality(input) && isCalculable(message)) {
+    state = states.afterCalculated;
+    message = prettyFormatExpr(message);
     exprMsg.textContent = message;
     message = calculate(message);
-    state = states.afterCalculated;
     return;
   }
 };
@@ -383,7 +403,7 @@ const handleBeforeCalculate = (input) => {
 const handleError = (input) => {
   if (input) {
     message = clearAll();
-    exprMsg.textContent = message;
+    exprMsg.textContent = clearAll();
   }
 
   state = states.beforeCalculated;
@@ -398,7 +418,6 @@ const updateScreen = (input) => {
       break;
     }
     case states.afterCalculated: {
-      exprMsg.textContent = message;
       handleAfterCalculate(input);
       break;
     }
@@ -407,7 +426,9 @@ const updateScreen = (input) => {
       break;
     }
   }
-  screenMsg.textContent = message;
+
+  screenMsg.textContent =
+    state != states.error ? prettyFormatExpr(message) : message;
 };
 
 const press = (elem) => elem.classList.add("is-pressed");

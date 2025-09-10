@@ -1,61 +1,44 @@
-function expHandler(n, charRoom) {
-  const defaultExp = n.toExponential();
-  const isOverFlow = defaultExp.length > charRoom;
+const parseExpressions = (expr) => {
+  expr = expr
+    .replace(/−/g, "-")
+    .replace(/,/g, "")
+    .replace(/÷/g, "/")
+    .replace(/×/g, "*");
 
-  const negRoom = n >= 0 ? 0 : 1;
-  const expRoom = defaultExp.match(/(?<=e[+-])\d+$/)[0].length;
-  const notationRoom = "d.±e".length;
-  const decimalRoom = charRoom - (negRoom + expRoom + notationRoom);
+  const tokens =
+    expr.match(/-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|[/*+\-]/g) || [];
 
-  return isOverFlow ? n.toExponential(decimalRoom) : n.toExponential();
-}
+  if (/^[/*+\-]$/.test(tokens.at(-1))) tokens.pop();
 
-function overFlowHandler(n, maxCharRoom = 12) {
-  const negRoom = n >= 0 ? 0 : 1;
-  const dotRoom = 1;
-
-  const stringfied = Math.abs(n).toString(10);
-
-  const [_, int, decimal] = stringfied.match(/^(\d+)(?:\.(\d+))?$/);
-  const isIntOverFlow = int.length + negRoom > maxCharRoom;
-  if (isIntOverFlow) return expHandler(n, maxCharRoom);
-  else {
-    const decimalRoom = maxCharRoom - (int.length + dotRoom + negRoom);
-    const neg = negRoom === 0 ? "" : "-";
-    const decimalAdjusted = roundTo(parseFloat("0." + decimal), decimalRoom)
-      .toString()
-      .slice(1);
-    return neg + int + decimalAdjusted;
-  }
-}
-
-function roundTo(num, decimals) {
-  const factor = 10 ** decimals;
-  return Math.round(num * factor) / factor;
-}
-
-const formatCalcResult = (n, maxCharRoom = 13) => {
-  const finite = Number.isFinite(n);
-
-  let result;
-  if (!finite) {
-    result = n;
-  }
-  if (finite) {
-    const stringfied = n.toString(10);
-    const isExpAlready = /e/i.test(n);
-    const isAsIs = !isExpAlready && stringfied.length <= maxCharRoom;
-    const isOverFlow = !isExpAlready && stringfied.length > maxCharRoom;
-
-    if (isExpAlready) result = expHandler(n, maxCharRoom);
-    if (isAsIs) result = n.toString();
-    if (isOverFlow) result = overFlowHandler(n, maxCharRoom);
-  }
-  return result;
+  return tokens;
 };
 
-const edgy1 = 1.2345678901200001;
-const edgy2 = -1680798074187.7441;
+function calculate(expr) {
+  const tokens = parseExpressions(expr);
+  console.log(tokens);
+  let arr = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let t = tokens[i];
+    if (t === "/" || t === "*") {
+      const left = Number(arr.pop());
+      const right = Number(tokens[i + 1]);
+      arr.push(t === "/" ? left / right : left * right);
+      i += 2;
+    } else {
+      arr.push(t);
+      i++;
+    }
+  }
 
-console.log(formatCalcResult(edgy1, 13));
-console.log(formatCalcResult(edgy2, 13));
+  const noPlus = arr.filter((el) => el !== "+");
+  let result = noPlus.reduce((a, b) => Number(a) + Number(b));
+
+  result = Number.isFinite(result) ? formatCalcResult(result) : "Error! (×_×)";
+
+  return result;
+}
+
+const test = "-3-3*244.7";
+
+console.log(calculate(test));

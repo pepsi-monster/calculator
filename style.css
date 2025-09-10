@@ -59,7 +59,7 @@ body {
 .screen .msg {
   margin-left: auto;
   text-shadow: 4px 4px 0 #041122;
-  font-size: 38px;
+  font-size: 36px;
   text-align: center;
   font-family: "Nunito", sans-serif;
   font-optical-sizing: auto;
@@ -130,7 +130,7 @@ body {
 
 h1 {
   text-shadow: 4px 4px 0 var(--btn-shadow);
-  font-size: 38px;
+  font-size: 36px;
   text-align: center;
   font-family: "Nunito", sans-serif;
   font-optical-sizing: auto;
