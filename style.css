@@ -15,9 +15,16 @@ button:focus {
 body {
   height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   background-color: #dbd9d6;
+  gap: 16px;
+}
+
+h3 {
+  font-family: "Nunito", sans-serif;
+  color: #0b0d11;
 }
 
 .calculator {
