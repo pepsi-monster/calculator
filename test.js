@@ -39,6 +39,9 @@ function calculate(expr) {
   return result;
 }
 
-const test = "-3-3*244.7";
+const test = "0";
 
-console.log(calculate(test));
+const secondToLastChar = test.slice(-2, -1);
+const lastChar = test.slice(-1);
+
+console.log(secondToLastChar === "");

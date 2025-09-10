@@ -345,7 +345,8 @@ const handleBeforeCalculate = (input) => {
   if (isOneToNine(input) && hasRoom) {
     if (
       (isMinus(secondToLastChar) && isZero(lastChar)) ||
-      (isOperators(secondToLastChar) && isZero(lastChar))
+      (isOperators(secondToLastChar) && isZero(lastChar)) ||
+      (secondToLastChar === "" && isZero(lastChar))
     ) {
       message = replaceLastChar(message, input);
       return;
